@@ -16,9 +16,8 @@ class DockerInfrastructureIT {
             .build()
             .provision()
             .use { jira ->
-                DockerisedChrome().use { chrome ->
-                    val driver = chrome.start()
-                    driver.navigate().to(jira.getDockerUri())
+                DockerisedChrome().start().use { chrome ->
+                    chrome.driver.navigate() to jira.getDockerUri()
                 }
 
                 val jiraAddress = jira.getUri()

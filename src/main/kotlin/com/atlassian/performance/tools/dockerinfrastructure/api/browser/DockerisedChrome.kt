@@ -7,25 +7,31 @@ import org.openqa.selenium.remote.RemoteWebDriver
 import org.testcontainers.containers.BrowserWebDriverContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
-class DockerisedChrome : Browser {
+class DockerisedChrome {
 
-    private val browser: BrowserWebDriverContainerImpl = BrowserWebDriverContainerImpl()
-        .withDesiredCapabilities(DesiredCapabilities.chrome())
-        .withRecordingMode(BrowserWebDriverContainer.VncRecordingMode.SKIP, null)
-        .waitingFor(HostPortWaitStrategy())
-        .withNetwork(SharedNetwork(SharedNetwork.DEFAULT_NETWORK_NAME))
-        .withExposedPorts(4444)
-
-    override fun start(): RemoteWebDriver {
+    fun start(): Browser {
+        val container = BrowserWebDriverContainerImpl()
+            .withDesiredCapabilities(DesiredCapabilities.chrome())
+            .withRecordingMode(BrowserWebDriverContainer.VncRecordingMode.SKIP, null)
+            .waitingFor(HostPortWaitStrategy())
+            .withNetwork(SharedNetwork(SharedNetwork.DEFAULT_NETWORK_NAME))
+            .withExposedPorts(4444)
         Ryuk.disable()
-        browser.start()
-        return browser.webDriver
+        container.start()
+        return ContainerBrowser(container)
     }
 
-    override fun close() {
-        browser.webDriver.quit()
-        browser.close()
+    private class ContainerBrowser(
+        private val container: BrowserWebDriverContainerImpl
+    ) : Browser {
+
+        override val driver: RemoteWebDriver = container.webDriver
+
+        override fun close() {
+            driver.quit()
+            container.close()
+        }
     }
 }
 
-private class BrowserWebDriverContainerImpl() : BrowserWebDriverContainer<BrowserWebDriverContainerImpl>()
+private class BrowserWebDriverContainerImpl : BrowserWebDriverContainer<BrowserWebDriverContainerImpl>()
